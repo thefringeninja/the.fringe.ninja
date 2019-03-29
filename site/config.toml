@@ -1,0 +1,16 @@
+baseurl = "http://the.fringe.ninja/"
+languageCode = "en-us"
+title = "Ninja Snacks"
+theme = "material-design"
+
+[author]
+  name = "João P. Bragança"
+
+[params]
+  github = "https://github.com/thefringeninja"
+  linkedin = "https://www.linkedin.com/in/jo%C3%A3o-bragan%C3%A7a-19502331/"
+
+  tagline = "Tales from the Enterprise"
+
+[permalinks]
+  post = "/:year/:month/:day/:title/"
