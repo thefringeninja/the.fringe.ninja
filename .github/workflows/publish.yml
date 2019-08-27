@@ -14,6 +14,7 @@ jobs:
         uses: actions/checkout@a14471d83
         with:
           submodules: true
+      - run: cd site
       - name: build
         uses: srt32/hugo-action@cf50985
       - name: publish
