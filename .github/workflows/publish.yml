@@ -1,0 +1,27 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  continuous-integration:
+    runs-on: ubuntu-latest
+    name: publish
+    steps:
+      - name: checkout master
+        uses: actions/checkout@a14471d83
+        with:
+          submodules: true
+      - name: build
+        uses: srt32/hugo-action@cf50985
+      - name: publish
+        run: |
+          git config user.email "495495+thefringeninja@users.noreply.github.com"
+          git config user.name "thefringeninja"
+          git add .
+          git commit -m "publish"
+          git remote set-url origin https://thefringeninja:${{secrets.ACCESS_TOKEN}}@github.com/thefringeninja/ninja-snacks.git
+          git remote -v
+          git push origin HEAD:gh-pages --force
