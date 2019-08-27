@@ -1,14 +1,23 @@
 baseurl = "http://the.fringe.ninja/"
 languageCode = "en-us"
 title = "Ninja Snacks"
-theme = "material-design"
+theme = "hugo-material-blog"
 
 [author]
   name = "João P. Bragança"
 
+[[menu.main]]
+  url = "/"
+  name = "Home"
+  pre = '<i class="material-icons left">home</i>'  
+[[menu.main]]
+  url = "/resume"
+  name = "Resume"
+  pre = '<i class="material-icons left">assignment</i>'  
 [params]
-  github = "https://github.com/thefringeninja"
-  linkedin = "https://www.linkedin.com/in/jo%C3%A3o-bragan%C3%A7a-19502331/"
+  github = "thefringeninja"
+  linkedin = "jo%C3%A3o-bragan%C3%A7a-19502331"
+  date_format = "Mon, 02 Jan 2006 15:04"
 
   tagline = "Tales from the Enterprise"
 

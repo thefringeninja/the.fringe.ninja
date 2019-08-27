@@ -1,0 +1,3 @@
+[submodule "site/themes/hugo-material-blog"]
+	path = site/themes/hugo-material-blog
+	url = git@github.com:thefringeninja/hugo-material-blog.git
