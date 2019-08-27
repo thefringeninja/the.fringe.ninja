@@ -15,15 +15,14 @@ jobs:
         with:
           submodules: true
       - name: build
-        uses: srt32/hugo-action@cf50985
+        uses: peaceiris/actions-hugo@v0.57.2
+        if: github.event.deleted == false
         with:
-          args: --contentDir site/content --layoutDir site/layouts --themesDir site/themes --config site/config.toml
-      - name: publish
-        run: |
-          git config user.email "495495+thefringeninja@users.noreply.github.com"
-          git config user.name "thefringeninja"
-          git add .
-          git commit -m "publish"
-          git remote set-url origin https://thefringeninja:${{secrets.ACCESS_TOKEN}}@github.com/thefringeninja/ninja-snacks.git
-          git remote -v
-          git push origin HEAD:gh-pages --force
+          args: --gc --minify --cleanDestinationDir --contentDir site/content --layoutDir site/layouts --themesDir site/themes --config site/config.toml
+      - name: deploy
+        uses: peaceiris/actions-gh-pages@v1.1.0
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: ./public
