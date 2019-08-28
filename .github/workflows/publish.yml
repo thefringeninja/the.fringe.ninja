@@ -3,26 +3,26 @@ name: Publish
 on:
   push:
     branches:
-      - master
+      - develop
 
 jobs:
   continuous-integration:
     runs-on: ubuntu-latest
     name: publish
     steps:
-      - name: checkout master
+      - name: Checkout
         uses: actions/checkout@a14471d83
         with:
           submodules: true
-      - name: build
+      - name: Build
         uses: peaceiris/actions-hugo@v0.57.2
         if: github.event.deleted == false
         with:
           args: --gc --minify --cleanDestinationDir --contentDir site/content --layoutDir site/layouts --themesDir site/themes --config site/config.toml
-      - name: deploy
+      - name: Deploy
         uses: peaceiris/actions-gh-pages@v1.1.0
         if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_BRANCH: gh-pages
+          PUBLISH_BRANCH: master
           PUBLISH_DIR: ./public
