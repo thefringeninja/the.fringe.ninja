@@ -1,4 +1,4 @@
-baseurl = "http://the.fringe.ninja/"
+baseurl = "https://the.fringe.ninja/"
 languageCode = "en-us"
 title = "Ninja Snacks"
 theme = "hugo-material-blog"
