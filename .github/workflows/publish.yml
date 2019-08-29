@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  pull_request:
 
 jobs:
   continuous-integration:
@@ -21,7 +22,7 @@ jobs:
           args: --gc --minify --cleanDestinationDir --contentDir site/content --layoutDir site/layouts --themesDir site/themes --config site/config.toml
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v1.1.0
-        if: success()
+        if: success() && github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_BRANCH: gh-pages
