@@ -1,0 +1,132 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Automatic Exception Reporting with YouTrack and Nancy pt. 2: Bouncing Off the Green Monster"><meta property=og:description content="In Part 1 of this series we looked at putting NancyFX as a simple http wrapper in front of YouTrack. Now we&rsquo;re going to make it more RESTful - i.e. we will display the error page to the user agent and include the exception report form on that page.
+We will do this by leveraging Nancy&rsquo;s status code handling features. This will allow us to intercept any status code we want and modify the response."><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2013/06/11/automatic-exception-reporting-with-youtrack-and-nancy-pt.-2-bouncing-off-the-green-monster/><meta property=article:published_time content=2013-06-11T10:00:00-07:00><meta property=article:modified_time content=2013-06-11T10:00:00-07:00><meta name=twitter:card content=summary><meta name=twitter:title content="Automatic Exception Reporting with YouTrack and Nancy pt. 2: Bouncing Off the Green Monster"><meta name=twitter:description content="In Part 1 of this series we looked at putting NancyFX as a simple http wrapper in front of YouTrack. Now we&rsquo;re going to make it more RESTful - i.e. we will display the error page to the user agent and include the exception report form on that page.
+We will do this by leveraging Nancy&rsquo;s status code handling features. This will allow us to intercept any status code we want and modify the response."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2013/06/11/automatic-exception-reporting-with-youtrack-and-nancy-pt.-2-bouncing-off-the-green-monster/><title>Automatic Exception Reporting with YouTrack and Nancy pt. 2: Bouncing Off the Green Monster &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Automatic Exception Reporting with YouTrack and Nancy pt. 2: Bouncing Off the Green Monster</h1><address>João P. Bragança</address><time datetime=2013-06-11>Tue, 11 Jun 2013 10:00</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>In <a href=/193/automatic-exception-reporting-with-you-track-and-nancy-pt-1-the-skeleton>Part 1</a> of this series we looked at putting <a href=http://nancyfx.org>NancyFX</a> as a simple http wrapper in front of <a href=http://jetbrains.com/youtrack>YouTrack</a>. Now we&rsquo;re going to make it more RESTful - i.e. we will display the error page to the user agent and <em>include the exception report form</em> on that page.</p><p>We will do this by leveraging Nancy&rsquo;s status code handling features. This will allow us to intercept any status code we want and modify the response. Let&rsquo;s start with the view to collect the bug report:</p><pre><code class=language-html>@inherits NancyRazorViewBase&lt;Nancy.Extras.ExceptionReporting.ViewModels.ReportExceptionViewModel&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;!-- Views/50x.cshtml --&gt;
+&lt;head&gt;
+    &lt;title&gt;@((int)RenderContext.Context.Response.StatusCode) @RenderContext.Context.Response.StatusCode&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;@((int)RenderContext.Context.Response.StatusCode) @RenderContext.Context.Response.StatusCode&lt;/h1&gt;
+    &lt;p&gt;A server error occurred.&lt;/p&gt;
+    &lt;section&gt;
+        &lt;h2&gt;Submit Bug Report&lt;/h2&gt;
+        &lt;p&gt;You may submit a bug report. While you don't have to, it would be super helpful if you did.&lt;/p&gt;
+        &lt;form action=&quot;~/issues/report-exception&quot; method=&quot;POST&quot;&gt;
+            &lt;label&gt;Notes:&lt;/label&gt;
+            &lt;textarea title=&quot;Please include as much detail as you can.&quot; name=&quot;Notes&quot;&gt;&lt;/textarea&gt;
+            &lt;details&gt;
+                &lt;summary&gt;Additional information will be submitted with your request:&lt;/summary&gt;
+                &lt;ul&gt;
+                    &lt;li&gt;Exception Type:
+                        &lt;pre&gt;@Model.ExceptionType&lt;/pre&gt;
+                    &lt;/li&gt;
+                    &lt;li&gt;Exception Detail:
+                        &lt;pre&gt;@Model.ExceptionDetail&lt;/pre&gt;
+                    &lt;/li&gt;
+                    &lt;li&gt;User Id:
+                        &lt;pre&gt;@Model.UserId&lt;/pre&gt;
+                    &lt;/li&gt;
+                    &lt;li&gt;Location:
+                        &lt;pre&gt;@Model.Location&lt;/pre&gt;
+                    &lt;/li&gt;
+                    &lt;li&gt;Request Entity:
+                        &lt;pre&gt;@Model.RequestEntity&lt;/pre&gt;
+                    &lt;/li&gt;
+                &lt;/ul&gt;
+            &lt;/details&gt;
+
+            &lt;input type=&quot;hidden&quot; name=&quot;ExceptionType&quot; value=&quot;@Model.ExceptionType&quot; /&gt;
+            &lt;input type=&quot;hidden&quot; name=&quot;ExceptionDetail&quot; value=&quot;@Model.ExceptionDetail&quot; /&gt;
+            &lt;input type=&quot;hidden&quot; name=&quot;UserId&quot; value=&quot;@Model.UserId&quot; /&gt;
+            &lt;input type=&quot;hidden&quot; name=&quot;Location&quot; value=&quot;@Model.Location&quot; /&gt;
+            &lt;input type=&quot;hidden&quot; name=&quot;RequestEntity&quot; value=&quot;@Model.RequestEntity&quot; /&gt;
+            &lt;input type=&quot;hidden&quot; name=&quot;ProjectId&quot; value=&quot;AWE&quot; /&gt;
+            &lt;input type=&quot;submit&quot; value=&quot;Submit Bug Report&quot;/&gt;
+        &lt;/form&gt;
+    &lt;/section&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre><p>Make sure you have your web.config set up properly for Razor. Basically you need to specify both <code>Nancy.ViewEngines.Razor.RazorConfigurationSection, Nancy.ViewEngines.Razor</code> and <code>System.Web.WebPages.Razor.Configuration.RazorPagesSection, System.Web.WebPages.Razor, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31BF3856AD364E35</code>. Otherwise Nancy&rsquo;s razor engine will blow up as it does not reference the System assembly directly.</p><p>Then we need an <code>IStatusCodeHandler</code> implementation:</p><pre><code class=language-csharp>public class YouTrackStatusCodeHandler : IStatusCodeHandler
+{
+    private readonly IViewFactory viewFactory;
+
+    public YouTrackStatusCodeHandler(IViewFactory viewFactory)
+    {
+        this.viewFactory = viewFactory;
+    }
+
+    #region IStatusCodeHandler Members
+
+    public bool HandlesStatusCode(HttpStatusCode statusCode, NancyContext context)
+    {
+        return (int) statusCode &gt;= 500;
+    }
+
+    public void Handle(HttpStatusCode statusCode, NancyContext context)
+    {
+        var viewModel = GetViewModel(context);
+
+        var originalStatusCode = context.Response.StatusCode;
+
+        context.Response = viewFactory.RenderView(&quot;50x&quot;, viewModel, new ViewLocationContext
+        {
+            Context = context
+        }).WithStatusCode(originalStatusCode);
+    }
+
+    private static string GetRequestEntity(Request request)
+    {
+        var requestEntityBuilder = new StringBuilder()
+            .Append(request.Method).Append(' ').Append(request.Url).AppendLine();
+        
+        var headers = from header in request.Headers
+                         let value = String.Join(&quot;, &quot;, header.Value)
+                         select new {key = header.Key, value};
+        
+        headers.Aggregate(requestEntityBuilder,
+                             (builder, header) =&gt; builder.Append(header.key).Append(&quot;: &quot;)
+                                                         .Append(header.value)
+                                                         .AppendLine());
+
+        return requestEntityBuilder.ToString();
+    }
+
+    private static ReportExceptionViewModel GetViewModel(NancyContext context)
+    {
+        var viewModel = new ReportExceptionViewModel
+        {
+            Location = context.Request.Url,
+            RequestEntity = GetRequestEntity(context.Request),
+            UserId = context.CurrentUser == null ? &quot;(anonymous)&quot; : context.CurrentUser.UserName
+        };
+
+        var exception = context.Items[NancyEngine.ERROR_EXCEPTION] as Exception;
+
+        if (exception == null) // means we just returned a server error out of our module
+        {
+            viewModel.ExceptionType = context.Response.StatusCode.ToString();
+            return viewModel;
+        }
+
+        if (exception is RequestExecutionException &amp;&amp; exception.InnerException != null)
+        {
+            exception = exception.InnerException;
+        }
+
+        viewModel.ExceptionDetail = exception.ToString();
+        viewModel.ExceptionType = exception.GetType().FullName;
+
+        return viewModel;
+    }
+
+    #endregion
+}
+</code></pre><p>We&rsquo;re only going to respond to <a href=https://twitter.com/DanaDanger/status/183316183494311936>5xx status codes</a>. You should return a 4xx code if you think the client messed up the request, e.g. <a href=http://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-22#section-6.5.4>bookmarking a link they shouldn&rsquo;t have</a>.</p><p>You&rsquo;ll also notice we aren&rsquo;t doing any content negotiation here. Wiring this to an <code>application/json</code> based api is outside the scope of this blog post. If you want to see how this could be done, <a href=http://paulstovell.com/>Paul Stovell</a> has a good blog post <a href=http://paulstovell.com/blog/consistent-error-handling-with-nancy>showing how to do content negotiation inside a IStatusCodeHandler</a>.</p><p>The last thing we need to do is patch our <code>IssuesModule</code> to do more than return a status code:</p><pre><code class=language-csharp>-			issues.CreateIssue(issue);
++			var issueId = issues.CreateIssue(issue);
+
+-			return 200;
++			return Negotiate.WithModel(new ExceptionReportedViewModel(issueId, Context));
+</code></pre><p>This way we can leverage Nancy&rsquo;s excellent view selection feature.</p><p>If you&rsquo;re like me (and lucky enough to use Nancy), you probably have multiple Nancy based apps scattered all over the enterprise. And as much as I am a fan of copy and paste, I certainly wouldn&rsquo;t want to copypasta this all over the place. For the final post in this series, I&rsquo;m going to show how you can make this composable.</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/nancyfx/>nancyfx</a>
+<a class=btn-small href=https://the.fringe.ninja/tags/youtrack/>youtrack</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>

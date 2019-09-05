@@ -1,0 +1,50 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Getting RavenDB Profiling Working on Nancy"><meta property=og:description content="This is my second attempt. :)
+About a year ago I made an attempt to wire Nancy together with RavenDB and failed miserably. Needed a break from businessy coding last night so I decided to work on something fun instead.
+The ability to see what&rsquo;s going on in your application is so important when it comes to performance tuning. Yes, there&rsquo;s that old adage about premature optimization. IMO this phrase is taken out of context."><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2013/08/15/getting-ravendb-profiling-working-on-nancy/><meta property=article:published_time content=2013-08-15T10:51:38-07:00><meta property=article:modified_time content=2013-08-15T10:51:38-07:00><meta name=twitter:card content=summary><meta name=twitter:title content="Getting RavenDB Profiling Working on Nancy"><meta name=twitter:description content="This is my second attempt. :)
+About a year ago I made an attempt to wire Nancy together with RavenDB and failed miserably. Needed a break from businessy coding last night so I decided to work on something fun instead.
+The ability to see what&rsquo;s going on in your application is so important when it comes to performance tuning. Yes, there&rsquo;s that old adage about premature optimization. IMO this phrase is taken out of context."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2013/08/15/getting-ravendb-profiling-working-on-nancy/><title>Getting RavenDB Profiling Working on Nancy &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Getting RavenDB Profiling Working on Nancy</h1><address>João P. Bragança</address><time datetime=2013-08-15>Thu, 15 Aug 2013 10:51</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>This is my second attempt. :)</p><p>About a year ago I made an attempt to wire <a href=http://nancyfx.org/>Nancy</a> together with <a href=http://ravendb.net/>RavenDB</a> and <a href=https://github.com/thefringeninja/randy>failed miserably</a>. Needed a break from businessy coding last night so I decided to work on something fun instead.</p><p>The ability to see what&rsquo;s going on in your application is so important when it comes to performance tuning. Yes, there&rsquo;s that old adage about <a href=http://c2.com/cgi/wiki?PrematureOptimization>premature optimization</a>. IMO this phrase is taken out of context. To me 97% of the time means 97% of the code in your face, which is doing stuff in memory. The other 3% of your code is doing I/O of some sort. Minimizing the use of I/O will provide the biggest performance gains for most applications.</p><p>In fact having the profiler on here has helped me find an unnecessary remote call on this blog, about a third of the total time spent on RavenDB.</p><p>To implement this guy, I had two major hurdles to climb: 1) The original <a href=https://github.com/ravendb/ravendb/tree/master/Raven.Client.MvcIntegration>RavenDB MVC Integration</a> relies on Action Filters and HttpContext.Current, which is the enemy of Nancy&rsquo;s portability. 2) It sends json over the wire and generates html with templates, which I personally loathe. The gist for my solution is <a href=https://gist.github.com/thefringeninja/6242976>here</a>.</p><p>To deal with 1) you need to use a bit of event hackery - register new events when the pipeline starts, then unregister them when the pipeline is complete. Warning! I am probably creating a memory leak with this code as I have no idea what I am doing.</p><pre><code class=language-csharp>// call this from your bootstrapper
+public static void InitializeFor(DocumentStore documentStore, IPipelines pipelines)
+{
+    documentStore.Conventions.DisableProfiling = false;
+    documentStore.InitializeProfiling();
+
+    pipelines.BeforeRequest.AddItemToStartOfPipeline(
+        context =&gt;
+        {
+            if (documentStore.WasDisposed)
+                return null;
+
+            Action&lt;InMemoryDocumentSessionOperations&gt; onSessionCreated =
+                operation =&gt; SessionCreated(operation, context);
+
+            Action&lt;ProfilingInformation&gt; onInformationCreated =
+                information =&gt; InformationCreated(information, context);
+
+            if (false == Operations.TryAdd(context, Tuple.Create(onSessionCreated, onInformationCreated)))
+                return null;
+
+            documentStore.SessionCreatedInternal += onSessionCreated;
+
+            return null;
+        });
+
+    pipelines.AfterRequest.AddItemToEndOfPipeline(
+        context =&gt;
+        {
+            if (documentStore.WasDisposed)
+                return;
+
+            //do something here to get the session ids into the rendered view.
+            //I use cassette so I will add an inline script with a hook.
+            
+            Tuple&lt;Action&lt;InMemoryDocumentSessionOperations&gt;, Action&lt;ProfilingInformation&gt;&gt; operation;
+
+            if (false == Operations.TryGetValue(context, out operation))
+                return;
+
+            documentStore.SessionCreatedInternal -= operation.Item1;
+            ProfilingInformation.OnContextCreated -= operation.Item2;
+        });
+}
+</code></pre><p>To deal with 2) I just leverage Nancy&rsquo;s view + view model conventions. The view model is greatly simplified. I am providing a lot less information than Ayende&rsquo;s profiler (which does not seem to be loading anymore) but I never really used that additional info anyway.</p><p>To create the modal, I return an html fragment from the server and insert that into the page. The javascript code for that is running on this blog, I&rsquo;ll let you try to find it :)</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/nancyfx/>nancyfx</a>
+<a class=btn-small href=https://the.fringe.ninja/tags/ravendb/>ravendb</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>

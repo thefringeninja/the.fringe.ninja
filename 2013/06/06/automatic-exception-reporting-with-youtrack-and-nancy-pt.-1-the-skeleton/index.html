@@ -1,0 +1,70 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Automatic Exception Reporting with YouTrack and Nancy pt. 1: The Skeleton"><meta property=og:description content="Getting the business users to try and recreate a bug is difficult to say the least. They may not remember what it is they did to reproduce. But you can bet that if you don&rsquo;t fix it by yesterday you&rsquo;re gonna get an earful. In fact we just did. This is me doing something about it :)
+Turns out this is annoyingly easy with Nancy and the YouTrackSharp library, so easy that I&rsquo;m not going to bother test driving this."><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2013/06/06/automatic-exception-reporting-with-youtrack-and-nancy-pt.-1-the-skeleton/><meta property=article:published_time content=2013-06-06T11:25:56+02:00><meta property=article:modified_time content=2013-06-06T11:25:56+02:00><meta name=twitter:card content=summary><meta name=twitter:title content="Automatic Exception Reporting with YouTrack and Nancy pt. 1: The Skeleton"><meta name=twitter:description content="Getting the business users to try and recreate a bug is difficult to say the least. They may not remember what it is they did to reproduce. But you can bet that if you don&rsquo;t fix it by yesterday you&rsquo;re gonna get an earful. In fact we just did. This is me doing something about it :)
+Turns out this is annoyingly easy with Nancy and the YouTrackSharp library, so easy that I&rsquo;m not going to bother test driving this."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2013/06/06/automatic-exception-reporting-with-youtrack-and-nancy-pt.-1-the-skeleton/><title>Automatic Exception Reporting with YouTrack and Nancy pt. 1: The Skeleton &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Automatic Exception Reporting with YouTrack and Nancy pt. 1: The Skeleton</h1><address>João P. Bragança</address><time datetime=2013-06-06>Thu, 06 Jun 2013 11:25</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>Getting the business users to try and recreate a bug is difficult to say the least. They may not remember what it is they did to reproduce. But you can bet that if you don&rsquo;t fix it by yesterday you&rsquo;re gonna get an earful. In fact we just did. This is me doing something about it :)</p><p>Turns out this is annoyingly easy with <a href=http://www.nancyfx.org>Nancy</a> and the <a href=http://nuget.org/packages/YouTrackSharp>YouTrackSharp library</a>, so easy that I&rsquo;m not going to bother test driving this. Frankly writing this post took longer than the actual code. First, the <code>Bootstrapper</code>:</p><pre><code class=language-csharp>public class Bootstrapper : DefaultNancyBootstrapper
+{
+    protected override void ConfigureApplicationContainer(TinyIoc.TinyIoCContainer container)
+    {
+        base.ConfigureApplicationContainer(container);
+
+        var connection = new Connection(&quot;localhost&quot;, port: 8085);
+        connection.Authenticate(&quot;application&quot;, &quot;abc123&quot;);
+
+        container.Register&lt;IConnection&gt;(connection);
+    }
+}
+</code></pre><p>I am unsure if a <code>Connection</code> is better served by a PerRequest lifestyle. I believe underneath it uses a cookie, which can expire. So maybe.</p><p>Next up is the viewmodel. Note the casting operator:</p><pre><code class=language-csharp>public class ReportExceptionViewModel
+{
+    public string ExceptionDetail { get; set; }
+    public string ExceptionType { get; set; }
+    public string UserId { get; set; }
+    public string Notes { get; set; }
+    public Uri Location { get; set; }
+    public string RequestEntity { get; set; }
+    public string ProjectId { get; set; }
+
+    public static implicit operator Issue(ReportExceptionViewModel viewModel)
+    {
+        dynamic issue = new Issue();
+
+        issue.Project = viewModel.ProjectId;
+        issue.Summary = viewModel.Location + &quot; - &quot; + viewModel.ExceptionType;
+        issue.Description = new StringBuilder()
+            .Append(viewModel.ExceptionDetail)
+            .AppendLine().AppendLine()
+            .AppendLine(viewModel.Notes)
+            .AppendLine().AppendLine()
+            .AppendLine(&quot;Environment:&quot;)
+            .AppendLine(viewModel.UserId)
+            .AppendLine(viewModel.RequestEntity)
+            .ToString();
+
+        return issue;
+    }
+}
+</code></pre><p>I&rsquo;ll explain more about the casting operator in a second.</p><p>What&rsquo;s up with that <code>dynamic</code>? Issues in YouTrack are really really flexible. You can attach an arbitrary set of fields to them. <code>dynamic</code> is a perfect fit, then.</p><p>Finally we have the <code>NancyModule</code>:</p><pre><code class=language-csharp>public class IssuesModule : NancyModule
+{
+    public IssuesModule(IssueManagement issues)
+        : base(&quot;/issues&quot;)
+    {
+        Get[&quot;/report-exception&quot;] = p =&gt;
+        {
+            var model = this.Bind&lt;ReportExceptionViewModel&gt;();
+            return Negotiate.WithModel(model);
+        };
+
+        Post[&quot;/report-exception&quot;] = p =&gt;
+        {
+            var model = this.Bind&lt;ReportExceptionViewModel&gt;();
+
+            Issue issue = model;
+            
+            issues.CreateIssue(issue);
+
+            return 200;
+        };
+    }
+}
+</code></pre><p>At this stage the <code>GET</code> isn&rsquo;t stricly necessary - we have no view so there&rsquo;s no <code>form</code> to display. I mostly have it in there to make sure that nancy properly binds the <code>ReportExceptionViewModel</code>. This is easy with the built in conneg - just append <code>.json</code> to the url and you are good to go. Nancy will happily take your query string, merge it with your <code>POST</code> if it is <code>application/x-www-form-urlencoded</code> and turn that into a flat DTO for you, just like PHP.</p><figure>    ![Testing it out with Advanced Rest Client](http://i.imgur.com/jbxujYU.png)
+   <figcaption>Testing it out with Advanced Rest Client</figcaption></figure><p>You&rsquo;ll also notice there&rsquo;s hardly any code in the <code>Module</code>. That&rsquo;s why I moved all that ugly object mapping into a casting operator. It&rsquo;ll keep our <code>Module</code> nice and clean.</p><figure>    ![The results](http://i.imgur.com/dyzHgzK.png)
+   <figcaption>The results</figcaption></figure><p>That&rsquo;s more or less it! You can easily wire this up in Silverlight, $.ajax, etc. But IMO this is not suitable for a real web application. As a user I&rsquo;d want a link to check up on this. As a developer I would like to wire this right into Nancy&rsquo;s status code / error handling mechanism. Next time we&rsquo;ll look at making this a bit more RESTful.</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/nancyfx/>nancyfx</a>
+<a class=btn-small href=https://the.fringe.ninja/tags/youtrack/>youtrack</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>

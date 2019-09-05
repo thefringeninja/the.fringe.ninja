@@ -1,0 +1,63 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Trusting Inputs, Via RESTa Via Nanciacum"><meta property=og:description content="All too often, security is treated as an afterthought in our models. I&rsquo;m as guilty of this as anyone. :) Now that HTTP is becoming the most popular protocol inside the enterprise, sending bad data across the wire becomes much easier. A hidden input field is not all that hidden.
+Let&rsquo;s take everyone&rsquo;s second favorite fake business problem: Enrolling Students in Classes. Let&rsquo;s take it further and say we want to develop this as a SaaS product."><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2014/04/21/trusting-inputs-via-resta-via-nanciacum/><meta property=article:published_time content=2014-04-21T13:52:37-07:00><meta property=article:modified_time content=2014-04-21T13:52:37-07:00><meta name=twitter:card content=summary><meta name=twitter:title content="Trusting Inputs, Via RESTa Via Nanciacum"><meta name=twitter:description content="All too often, security is treated as an afterthought in our models. I&rsquo;m as guilty of this as anyone. :) Now that HTTP is becoming the most popular protocol inside the enterprise, sending bad data across the wire becomes much easier. A hidden input field is not all that hidden.
+Let&rsquo;s take everyone&rsquo;s second favorite fake business problem: Enrolling Students in Classes. Let&rsquo;s take it further and say we want to develop this as a SaaS product."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2014/04/21/trusting-inputs-via-resta-via-nanciacum/><title>Trusting Inputs, Via RESTa Via Nanciacum &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Trusting Inputs, Via RESTa Via Nanciacum</h1><address>João P. Bragança</address><time datetime=2014-04-21>Mon, 21 Apr 2014 13:52</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>All too often, security is treated as an afterthought in our models. I&rsquo;m as guilty of this as anyone. :) Now that HTTP is becoming the most popular protocol inside the enterprise, sending bad data across the wire becomes much easier. A hidden input field is not all that hidden.</p><p>Let&rsquo;s take everyone&rsquo;s second favorite fake business problem: Enrolling Students in Classes. Let&rsquo;s take it further and say we want to develop this as a SaaS product. It&rsquo;ll need to be a multi tenant application. There are lots of independent community colleges (<code>Institutions</code>) out there and we don&rsquo;t want to run a VM or process per <code>Institution</code>.</p><p>Obviously, we will need to prevent cross contamination between tenants. Imagine the horror if a student changed the <code>institution-id</code> on his HTML form and we blindly let it through. </p><p>Sure, we could load the <code>Institution</code> from persistent storage and ensure the <code>Enrollee</code> is actually enrolled there and that the <code>Class</code> is offered. But you can imagine how large that collection would be. We can get better performance if we sign these requests.</p><p>Let&rsquo;s fix this problem by applying the principles of REST.</p><h2 id=restful-interactions>RESTful Interactions</h2><p>Often times when we talk about REST, we assume it has something to do with HTTP verbs and JSON. I hear it in job interviews all the time:</p><blockquote><p>Them: &ldquo;Can you explain REST?&rdquo;</p><p>Me: &ldquo;Sure! REST is REpresentational State Transfer. The client may only do (manipulate resources) what the server tells it to (via representations of those resources). Simply put, a RESTful client starts at the bookmark URL and&hellip;&rdquo;</p><p>Them: &ldquo;No, I mean explain what some HTTP verbs are and what they do.&rdquo;</p><p>Me: &ldquo;&hellip;&rdquo;</p></blockquote><p>Don&rsquo;t misunderstand me - JSON over HTTP is a huge improvement over SOAP and all the baggage that comes with. But, this is not how humans typically interact with resources - we don&rsquo;t load up Fiddler2 and start POSTing data to random URLs. We type in a root url, click links, submit forms and click more links.</p><p>Also, you can now see the problem of the client knowing too much here. We&rsquo;d have to distribute these secret keys to all clients. They&rsquo;d also have to know how to sign the request. If we want to change this logic, we either have to a) maintain separate URL hierarchies for each version b) maintain separate media types for each version or c) redeploy every phone app and break backwards compatibility. REST shines by skipping this problem entirely.</p><p>Instead, the server and the server alone should contain this logic.</p><p>``html
+GET /my-awesome-party-school/classes?q=american%20history HTTP/1.1 
+Authorize: [token]</p><p>HTTP/1.1 200 OK</p><p><html><body><ul><li><a href="/my-awesome-party-school/enroll?institution-id=1&class-id=2&student-id=3&title=American%20History%20X&**token=somehash**">Enroll</a></li></ul></body></html></p><pre><code>
+</code></pre><p>html
+GET /my-awesome-party-school/enroll?institution-id=1&amp;class-id=2&amp;student-id=3&amp;title=American%20History%20X&amp;<strong>token=somehash</strong>
+Authorize: [token]</p><p>HTTP/1.1 200 OK</p><p><html><body><form action=/my-awesome-party-school/enroll method=post><input type=hidden name=institution-id value=1>
+<input type=hidden name=class-id value=2>
+<input type=hidden name=student-id value=3>
+<strong><input type=hidden name=token value=somehash></strong>
+Reason for taking this class: <input type=text name=reason></form></body></html></p><pre><code>	
+And then of course we `POST` the form back. If anyone tries to tamper with the request, we'll know.
+
+## The Nancy Bits
+
+Behold, the power of NANCY! This is pretty trivial to do with a little help from our friend [Nancy.Validation.FluentValidation](https://www.nuget.org/packages/Nancy.Validation.FluentValidation):
+
+</code></pre><p>csharp
+public interface Secured {
+public string Token { get; set; }
+}</p><p>public delegate string CalculateToken<t>(T input);</p><p>public abstract class CommandValidator<t> : AbstractValidator<t> where T: Secured {
+protected CommandValidator(CalculateToken<t> calculateToken) {
+Func<t, string, bool> match = (dto, token) =&gt; calculateToken(dto).Equals(token);</p><pre><code>    RuleFor(x =&gt; x.Token).Must(match).WithMessage(&quot;Nice try hacker&quot;);
+}
+</code></pre><p>}</p><p>public class EnrollValidator : CommandValidator<enrollbuilder> {
+public EnrollValidator() {
+RuleFor(x =&gt; x.Reason).Must(NotContainBadWords);
+}</p><pre><code>private static bool NotContainBadWords(string s) {
+    // use your imagination
+}
+</code></pre><p>}</p><p>// module code
+Get[&ldquo;/{institution}/enroll&rdquo;] = _ =&gt; {
+var builder = this.Bind<enrollbuilder>();
+return Negotiate.WithModel(builder);
+}
+Post[&ldquo;/{institution}/enroll&rdquo;] = _ =&gt; {
+Enroll command = this.BindAndValidate<enrollbuilder>(); // use two classes here to keep Token concept out of command
+if (false == ModelValidationResult.IsValid)
+{
+return Negotiate.WithModel(
+new ValidationErrorsViewModel(ModelValidationResult))
+.WithStatusCode(400);
+}</p><pre><code>bus.Send(command);
+</code></pre><p>}
+// Application Registrations
+public class Registrations : IApplicationRegistrations
+{
+public IEnumerable<typeregistration> TypeRegistrations { get; private set; }
+public IEnumerable<collectiontyperegistration> CollectionTypeRegistrations { get; private set; }</p><pre><code>public IEnumerable&lt;InstanceRegistration&gt; InstanceRegistrations
+{
+    get
+    {
+           // where Statically.CalculateHash takes a params object[] hashes with your super secret key from config, database, hard coded, whatever and returns a string
+        yield return new InstanceRegistration(
+            typeof (CalculateToken&lt;EnrollBuilder&gt;), new CalculateToken&lt;EnrollBuilder&gt;(dto =&gt; Statically.CalculateHash(dto.InstitutionId, dto.StudentId, dto.ClassId)));
+
+    }
+}
+</code></pre><p>}
+```</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/nancyfx/>nancyfx</a>
+<a class=btn-small href=https://the.fringe.ninja/tags/rest/>rest</a>
+<a class=btn-small href=https://the.fringe.ninja/tags/hateoas/>hateoas</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>

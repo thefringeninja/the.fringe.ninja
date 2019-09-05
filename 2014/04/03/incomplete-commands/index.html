@@ -1,0 +1,46 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Incomplete Commands"><meta property=og:description content="Recently a question came up in the CQRS chatroom on Jabbr:  Here&rsquo;s the situation. New command comes in, They can sometimes be missing some info (for daft reasons), if it is missing info then I need to call off to an external api to get the info back. This external api is unreliable so it would be better to supply the information upfront if possible.
+ There are a couple of ways to do this."><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2014/04/03/incomplete-commands/><meta property=article:published_time content=2014-04-03T15:27:21-05:00><meta property=article:modified_time content=2014-04-03T15:27:21-05:00><meta name=twitter:card content=summary><meta name=twitter:title content="Incomplete Commands"><meta name=twitter:description content="Recently a question came up in the CQRS chatroom on Jabbr:  Here&rsquo;s the situation. New command comes in, They can sometimes be missing some info (for daft reasons), if it is missing info then I need to call off to an external api to get the info back. This external api is unreliable so it would be better to supply the information upfront if possible.
+ There are a couple of ways to do this."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2014/04/03/incomplete-commands/><title>Incomplete Commands &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Incomplete Commands</h1><address>João P. Bragança</address><time datetime=2014-04-03>Thu, 03 Apr 2014 15:27</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>Recently a question came up in the <a href=https://jabbr.net/#/rooms/DDD-CQRS-ES>CQRS chatroom</a> on Jabbr: </p><blockquote><p>Here&rsquo;s the situation. New command comes in, They can sometimes be missing some info (for daft reasons), if it is missing info then I need to call off to an external api to get the info back. This external api is unreliable so it would be better to supply the information upfront if possible.</p></blockquote><p>There are a couple of ways to do this.</p><p>1) Enrich the command before it goes to the domain.</p><pre><code class=language-csharp>Post[&quot;/list-stuff&quot;] = _ =&gt; {
+     var listStuff = this.BindAndValidate&lt;ListStuff&gt;();
+     
+     if (false == listStuff.GrossWeight.HasValue) {
+    listStuff.GrossWeight = getUnitWeight(listStuff.PartNumber);
+     }
+     
+     bus.Send(listStuff);
+}
+</code></pre><p>2) Do it from inside the aggregate.</p><pre><code class=language-csharp>public Listing(string partNumber, Money unitPrice, Mass grossWeight, GetUnitWeight getUnitWeight) {
+     Guard.Against(partNumber == null);
+     Guard.Against(unitPrice == null || unitPrice &lt;= 0m);
+
+     grossWeight = grossWeight ?? getUnitWeight(partNumber);
+
+     Guard.Against(grossWeight &lt;= 0m);
+     
+     ApplyChange(new StuffListed(...));
+}
+</code></pre><p>1) and 2) are basically the same thing - you add additional state before any state change occurs. However, there&rsquo;s a big disadvantage when time is of the essence. What happens when the 3rd party service is down?</p><p>If your typical user gets a couple of these a day, this is not really a big deal. His work queue is manageable. What if he needs to do one of these every five minutes?</p><p>3) Make it explicit!</p><pre><code class=language-csharp>public Listing(string partNumber, Money unitPrice, Mass grossWeight) {
+     Guard.Against(partNumber == null);
+     Guard.Against(unitPrice == null || unitPrice &lt;= 0m);
+     Guard.Against(grossWeight == null || grossWeight &lt;= 0m);
+
+     ApplyChange(new StuffListed(...));
+     
+     if (grossWeight.Equals(Mass.Empty)) {
+    ApplyChange(new ListingWeightRequired(...));
+     }
+     else {
+    ApplyChange(new ListingApproved(...));
+     }
+}
+
+public void SpecifyGrossWeight(Mass grossWeight) {
+     ApplyChange(new GrossWeightSpecified(...));
+     ApplyChange(new ListingApproved(...));
+}
+
+public void Handle(ListingWeightRequired e) {
+     bus.Send(new ListStuff(e.ListingId, getUnitWeight(e.PartNumber)));
+}
+</code></pre><p>This has its drawbacks too. You now have a queue to manage; there&rsquo;s somewhat more code to maintain.</p><p>As usual, the answer is it <em>depends</em> :) If there is a low volume of work here, you can just present the user with a list of things that need to get done. If there is an error on an item he can come back to it later. If your users are going to get inundated with work items, or there is some other kind of time constraint, I would go with 3).</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/ddd/>ddd</a>
+<a class=btn-small href=https://the.fringe.ninja/tags/cqrs/>cqrs</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>

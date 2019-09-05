@@ -1,0 +1,41 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Organizing Per Feature in Nancy"><meta property=og:description content="We&rsquo;ve all built applications that look like this:
+There&rsquo;s a bit of a problem here. What does Exception Reporting have to do with Validation? Or the Home Page? Mostly nothing, other than these classes perform the same kind of function.
+much, much nicer to have views, view models, validators, command/query handlers all adjacent together
+&mdash; Jimmy Bogard (@jbogard) October 2, 2013 Wouldn&rsquo;t it be easier to organize everything by feature instead?"><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2013/10/03/organizing-per-feature-in-nancy/><meta property=article:published_time content=2013-10-03T09:00:00-07:00><meta property=article:modified_time content=2013-10-03T09:00:00-07:00><meta name=twitter:card content=summary><meta name=twitter:title content="Organizing Per Feature in Nancy"><meta name=twitter:description content="We&rsquo;ve all built applications that look like this:
+There&rsquo;s a bit of a problem here. What does Exception Reporting have to do with Validation? Or the Home Page? Mostly nothing, other than these classes perform the same kind of function.
+much, much nicer to have views, view models, validators, command/query handlers all adjacent together
+&mdash; Jimmy Bogard (@jbogard) October 2, 2013 Wouldn&rsquo;t it be easier to organize everything by feature instead?"><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2013/10/03/organizing-per-feature-in-nancy/><title>Organizing Per Feature in Nancy &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Organizing Per Feature in Nancy</h1><address>João P. Bragança</address><time datetime=2013-10-03>Thu, 03 Oct 2013 09:00</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>We&rsquo;ve all built applications that look like this:</p><p><img src=http://i.imgur.com/Wr9zcDZ.png alt="Typical project structure" title="Typical project structure"></p><p>There&rsquo;s a bit of a problem here. What does Exception Reporting have to do with Validation? Or the Home Page? Mostly nothing, other than <em>these classes perform the same kind of function</em>.</p><blockquote class=twitter-tweet><p>much, much nicer to have views, view models, validators, command/query handlers all adjacent together</p>&mdash; Jimmy Bogard (@jbogard) <a href=https://twitter.com/jbogard/statuses/385406604243255296>October 2, 2013</a></blockquote><p>Wouldn&rsquo;t it be easier to organize everything by feature instead? Views, View Models, scripts, stylesheets, everything?</p><p><img src=http://i.imgur.com/yV539vq.png alt="Better project structure" title="Better project structure"></p><p>This is a cinch in Nancy. First thing you need to do is specify your own view location conventions:</p><pre><code class=language-csharp>protected override void ConfigureConventions(NancyConventions nancyConventions)
+{
+    base.ConfigureConventions(nancyConventions);
+
+    nancyConventions.ViewLocationConventions.Clear();
+    
+    nancyConventions.ViewLocationConventions.Add(
+        (viewName, model, viewLocationContext) =&gt;
+            &quot;features&quot; + viewLocationContext.ModulePath.Underscore().Pascalize() + &quot;/views/&quot; + viewName);
+
+    nancyConventions.ViewLocationConventions.Add(
+        (viewName, model, viewLocationContext) =&gt; 
+            &quot;features/home/views/&quot; + viewName);
+
+    nancyConventions.ViewLocationConventions.Add(
+        (viewName, model, viewLocationContext) =&gt;
+            &quot;features/&quot; + viewName);
+}
+</code></pre><p>This tells Nancy that your views are in a sub folder of your feature (which must have the same name as your module path), and fallback to the &lsquo;home&rsquo; feature if it can&rsquo;t find something. This is so you can define a layout once, and override the layout later if you want.</p><p>As for assets, I&rsquo;m personally a fan of Cassette. Unfortunately I haven&rsquo;t figured out how to put scripts and stylesheets in the same folder as the feature:</p><pre><code class=language-csharp>public class CassetteBundleConfiguration : IConfiguration&lt;BundleCollection&gt;
+{
+    #region IConfiguration&lt;BundleCollection&gt; Members
+
+    public void Configure(BundleCollection bundles)
+    {
+        bundles.AddPerSubDirectory&lt;StylesheetBundle&gt;(&quot;~/content/features&quot;, new FileSearch
+        {
+            Pattern = &quot;bootstrap.less&quot;
+        });
+        bundles.AddPerSubDirectory&lt;ScriptBundle&gt;(&quot;~/scripts/lib&quot;);
+        bundles.AddPerSubDirectory&lt;ScriptBundle&gt;(&quot;~/scripts/features&quot;);
+    }
+
+    #endregion
+}
+</code></pre><p>Then it is just a matter of referencing certain scripts and stylesheets from your view that all resources in this &lsquo;feature&rsquo; share.</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/nancyfx/>nancyfx</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>
