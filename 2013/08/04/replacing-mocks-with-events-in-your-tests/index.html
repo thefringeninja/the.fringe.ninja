@@ -1,80 +1,80 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property=og:title content="Replacing Mocks with Events in Your Tests"><meta property=og:description content="Sometimes our model can&rsquo;t be as pure as the driven snow. Sometimes we have to use a really crappy external model because replacing it outright would be too expensive. Typically we deal with this in our tests with some kind of mocking framework.
-Example,we have a use case for &lsquo;creating&rsquo; an item in the ERP system. Of course in real life nothing ever gets &lsquo;created.&rsquo; Instead our inventory items are &lsquo;created&rsquo; upstream in the product development context."><meta property=og:type content=article><meta property=og:url content=https://the.fringe.ninja/2013/08/04/replacing-mocks-with-events-in-your-tests/><meta property=article:published_time content=2013-08-04T13:20:01-07:00><meta property=article:modified_time content=2013-08-04T13:20:01-07:00><meta name=twitter:card content=summary><meta name=twitter:title content="Replacing Mocks with Events in Your Tests"><meta name=twitter:description content="Sometimes our model can&rsquo;t be as pure as the driven snow. Sometimes we have to use a really crappy external model because replacing it outright would be too expensive. Typically we deal with this in our tests with some kind of mocking framework.
-Example,we have a use case for &lsquo;creating&rsquo; an item in the ERP system. Of course in real life nothing ever gets &lsquo;created.&rsquo; Instead our inventory items are &lsquo;created&rsquo; upstream in the product development context."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2013/08/04/replacing-mocks-with-events-in-your-tests/><title>Replacing Mocks with Events in Your Tests &middot; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Replacing Mocks with Events in Your Tests</h1><address>João P. Bragança</address><time datetime=2013-08-04>Sun, 04 Aug 2013 13:20</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>Sometimes our model can&rsquo;t be as pure as the driven snow. Sometimes we have to use a really crappy external model because replacing it outright would be too expensive. Typically we deal with this in our tests with some kind of mocking framework.</p><p>Example,we have a use case for &lsquo;creating&rsquo; an item in the ERP system. Of course in real life nothing ever gets &lsquo;created.&rsquo; Instead our inventory items are &lsquo;created&rsquo; upstream in the product development context. Once the product has reached a certain point of development, they are released to manufacturing. They must go into the ERP system which is where purchase orders originate.</p><pre><code class=language-csharp>var mockItems = new Mock&lt;Items_Port&gt;();
-mockItems.Setup(client =&gt; client.Create(It.IsAny&lt;Item&gt;()).Returns(new Item_Result());
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="ie=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta property="og:title" content="Replacing Mocks with Events in Your Tests"><meta property="og:description" content="Sometimes our model can&rsquo;t be as pure as the driven snow. Sometimes we have to use a really crappy external model because replacing it outright would be too expensive. Typically we deal with this in our tests with some kind of mocking framework.
+Example,we have a use case for &lsquo;creating&rsquo; an item in the ERP system. Of course in real life nothing ever gets &lsquo;created.&rsquo; Instead our inventory items are &lsquo;created&rsquo; upstream in the product development context."><meta property="og:type" content="article"><meta property="og:url" content="https://the.fringe.ninja/2013/08/04/replacing-mocks-with-events-in-your-tests/"><meta property="article:published_time" content="2013-08-04T13:20:01-07:00"><meta property="article:modified_time" content="2013-08-04T13:20:01-07:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Replacing Mocks with Events in Your Tests"><meta name=twitter:description content="Sometimes our model can&rsquo;t be as pure as the driven snow. Sometimes we have to use a really crappy external model because replacing it outright would be too expensive. Typically we deal with this in our tests with some kind of mocking framework.
+Example,we have a use case for &lsquo;creating&rsquo; an item in the ERP system. Of course in real life nothing ever gets &lsquo;created.&rsquo; Instead our inventory items are &lsquo;created&rsquo; upstream in the product development context."><meta name=description content><link rel=canonical href=https://the.fringe.ninja/2013/08/04/replacing-mocks-with-events-in-your-tests/><title>Replacing Mocks with Events in Your Tests &#183; Ninja Snacks</title><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css><link href=https://the.fringe.ninja/css/style.css rel=stylesheet></head><body><nav class=white role=navigation><div class="row max-width"><div class="col s12 l10 offset-l1"><a href=# data-target=nav-mobile class="sidenav-trigger black-text"><i class=material-icons>menu</i></a><ul id=nav-mobile class=sidenav><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul><a href=/ class="brand-logo grey-text text-darken-3">Ninja Snacks <small>- Tales from the Enterprise</small></a><div class=nav-wrapper><ul class="right hide-on-med-and-down"><li><a class=black-text href=/><i class="material-icons left">home</i>Home</a></li><li><a class=black-text href=/resume><i class="material-icons left">assignment</i>Resume</a></li></ul></div></div></div></nav><article class=max-width><header class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><h1>Replacing Mocks with Events in Your Tests</h1><address>João P. Bragança</address><time datetime=2013-08-04>Sun, 04 Aug 2013 13:20</time></div></header><section class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p>Sometimes our model can&rsquo;t be as pure as the driven snow. Sometimes we have to use a really crappy external model because replacing it outright would be too expensive. Typically we deal with this in our tests with some kind of mocking framework.</p><p>Example,we have a use case for &lsquo;creating&rsquo; an item in the ERP system. Of course in real life nothing ever gets &lsquo;created.&rsquo; Instead our inventory items are &lsquo;created&rsquo; upstream in the product development context. Once the product has reached a certain point of development, they are released to manufacturing. They must go into the ERP system which is where purchase orders originate.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=color:#66d9ef>var</span> mockItems = <span style=color:#66d9ef>new</span> Mock&lt;Items_Port&gt;();
+mockItems.Setup(client =&gt; client.Create(It.IsAny&lt;Item&gt;()).Returns(<span style=color:#66d9ef>new</span> Item_Result());
 
-// do your thing
-
+<span style=color:#75715e>// do your thing
+</span><span style=color:#75715e></span>
 mockItems.Verify(client =&gt; client.Create(It.IsAny&lt;Item&gt;(), Times.Once());
-</code></pre><p>Oops, there&rsquo;s already a problem here! This works fine if this interface has a method with a few parameters on it. What happens when the parameter list is 50? Or if there&rsquo;s 1 parameter, a DTO with 50 properties? Navision&rsquo;s default web services for something like Item has a <em>ton</em> of properties on them (of course the enterprise only actually uses 10 of these properties, making you wonder why the rest of them are there). At 10 properties, if you want to verify that certain properties were set, you&rsquo;re gonna have a bad time.</p><p>When you order something from a factory, you don&rsquo;t order 3 pieces. You have to order by the case. Which means you need to have your unit of measure matrix setup. But you can&rsquo;t do that until the item record is &lsquo;created.&rsquo; So guess what? Now you have to make 3 calls here! One to create the item (and get its id back), another to setup the UoM with the id, then a third call to update the item record with the default units of measure. This is quickly becoming a pain in the ass.</p><p>If you&rsquo;re already leveraging an Event Driven Architecture there&rsquo;s an easy solution: make a fake that publishes events on your <code>IBus</code> when you make those method calls.</p><pre><code class=language-csharp>internal class FakeItemsPort : Item_Port
+</code></pre></div><p>Oops, there&rsquo;s already a problem here! This works fine if this interface has a method with a few parameters on it. What happens when the parameter list is 50? Or if there&rsquo;s 1 parameter, a DTO with 50 properties? Navision&rsquo;s default web services for something like Item has a <em>ton</em> of properties on them (of course the enterprise only actually uses 10 of these properties, making you wonder why the rest of them are there). At 10 properties, if you want to verify that certain properties were set, you&rsquo;re gonna have a bad time.</p><p>When you order something from a factory, you don&rsquo;t order 3 pieces. You have to order by the case. Which means you need to have your unit of measure matrix setup. But you can&rsquo;t do that until the item record is &lsquo;created.&rsquo; So guess what? Now you have to make 3 calls here! One to create the item (and get its id back), another to setup the UoM with the id, then a third call to update the item record with the default units of measure. This is quickly becoming a pain in the ass.</p><p>If you&rsquo;re already leveraging an Event Driven Architecture there&rsquo;s an easy solution: make a fake that publishes events on your <code>IBus</code> when you make those method calls.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-csharp data-lang=csharp><span style=color:#66d9ef>internal</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FakeItemsPort</span> : Item_Port
 {
-    private readonly IBus bus;
-    private readonly Func&lt;Create, Create_Result&gt; create;
-    private readonly Func&lt;Delete, Delete_Result&gt; delete;
+    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>readonly</span> IBus bus;
+    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>readonly</span> Func&lt;Create, Create_Result&gt; create;
+    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>readonly</span> Func&lt;Delete, Delete_Result&gt; delete;
 
-    public FakeItemsPort(IBus bus, Func&lt;Create, Create_Result&gt; create = null, Func&lt;Delete, Delete_Result&gt; delete = null)
+    <span style=color:#66d9ef>public</span> FakeItemsPort(IBus bus, Func&lt;Create, Create_Result&gt; create = <span style=color:#66d9ef>null</span>, Func&lt;Delete, Delete_Result&gt; delete = <span style=color:#66d9ef>null</span>)
     {
-        this.bus = bus;
-        this.create = create ?? (_ =&gt; new Create_Result(_.Item));
-        this.delete = delete ?? (_ =&gt; new Delete_Result());
+        <span style=color:#66d9ef>this</span>.bus = bus;
+        <span style=color:#66d9ef>this</span>.create = create ?? (_ =&gt; <span style=color:#66d9ef>new</span> Create_Result(_.Item));
+        <span style=color:#66d9ef>this</span>.delete = delete ?? (_ =&gt; <span style=color:#66d9ef>new</span> Delete_Result());
     }
 
-    private static IEnumerable&lt;Event&gt; ItemCreated(CreateItem request)
+    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> IEnumerable&lt;Event&gt; ItemCreated(CreateItem request)
     {
-        yield return new TestEvents.ItemCreated(request.Item);
+        <span style=color:#66d9ef>yield</span> <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>new</span> TestEvents.ItemCreated(request.Item);
     }
     
-    public Create_Result Create(Create request) 
+    <span style=color:#66d9ef>public</span> Create_Result Create(Create request) 
     {
-        var result = create(request);
+        <span style=color:#66d9ef>var</span> result = create(request);
         
         ItemCreated(request).ForEach(bus.Publish);
         
-        return result;
+        <span style=color:#66d9ef>return</span> result;
     }
     
-    // etc
-}
+    <span style=color:#75715e>// etc
+</span><span style=color:#75715e></span>}
 
-public static class TestEvents
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>TestEvents</span>
 {
-    public Event ItemCreated(Item item) 
+    <span style=color:#66d9ef>public</span> Event ItemCreated(Item item) 
     {
-        return new 
+        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>new</span> 
     }
     
-    class ItemCreated: Event : IEquatable&lt;Event&gt; // after you choose the fields you want to test were set just let resharper generate this for you
-    {
-        public ItemCreated(Item item) 
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ItemCreated</span>: Event : IEquatable&lt;Event&gt; <span style=color:#75715e>// after you choose the fields you want to test were set just let resharper generate this for you
+</span><span style=color:#75715e></span>    {
+        <span style=color:#66d9ef>public</span> ItemCreated(Item item) 
         {
-            this.description = item.Description;
-            this.itemId = item.ItemId;
-            // etc
-        }
+            <span style=color:#66d9ef>this</span>.description = item.Description;
+            <span style=color:#66d9ef>this</span>.itemId = item.ItemId;
+            <span style=color:#75715e>// etc
+</span><span style=color:#75715e></span>        }
         
-        public ItemCreated(Guid itemId, string description)  // just the fields we care about
-        {
-            this.description = description;
-            this.itemId = itemId;
-            // etc
-        }
+        <span style=color:#66d9ef>public</span> ItemCreated(Guid itemId, <span style=color:#66d9ef>string</span> description)  <span style=color:#75715e>// just the fields we care about
+</span><span style=color:#75715e></span>        {
+            <span style=color:#66d9ef>this</span>.description = description;
+            <span style=color:#66d9ef>this</span>.itemId = itemId;
+            <span style=color:#75715e>// etc
+</span><span style=color:#75715e></span>        }
     }
 }
-
-[TestFixture]
-public class SomeTest
+<span style=color:#a6e22e>
+</span><span style=color:#a6e22e>[TestFixture]</span>
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SomeTest</span>
 {
-    IList&lt;Event&gt; events = new List&lt;Event&gt;();
+    IList&lt;Event&gt; events = <span style=color:#66d9ef>new</span> List&lt;Event&gt;();
     EnterpriseResourcePlanning navision;
-    [SetUp]
-    public void SetUp() 
+<span style=color:#a6e22e>    [SetUp]</span>
+    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> SetUp() 
     {
-        var bus = new Bus();
+        <span style=color:#66d9ef>var</span> bus = <span style=color:#66d9ef>new</span> Bus();
         
         bus.Register&lt;Event&gt;(events.Add);
         
-        navision = new Navision(bus, new FakeItemsPort(), ...);
+        navision = <span style=color:#66d9ef>new</span> Navision(bus, <span style=color:#66d9ef>new</span> FakeItemsPort(), ...);
     }
 }
-</code></pre><p>Couple of things I want to note here. I&rsquo;m passing in a delegate to the constructor because I want to test what happens when it throws an exception. I&rsquo;m also not bothering implementing any of the methods e.g. CreateMultiple I won&rsquo;t ever call.</p><p>Then all you need to assert in your tests is that <code>events.SequenceEqual(TestEvents.ItemCreate(someGuid, &quot;My Description&quot;), ...)</code> and you are done. Is this more code than setting up a mock? Sure, but for the first test. You will reap the rewards after the second or third test and certainly when you put in all your edge cases.</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/ddd/>ddd</a>
+</code></pre></div><p>Couple of things I want to note here. I&rsquo;m passing in a delegate to the constructor because I want to test what happens when it throws an exception. I&rsquo;m also not bothering implementing any of the methods e.g. CreateMultiple I won&rsquo;t ever call.</p><p>Then all you need to assert in your tests is that <code>events.SequenceEqual(TestEvents.ItemCreate(someGuid, "My Description"), ...)</code> and you are done. Is this more code than setting up a mock? Sure, but for the first test. You will reap the rewards after the second or third test and certainly when you put in all your edge cases.</p></div></section><footer class=row><div class="col s12 m10 offset-m1 l10 offset-l1"><p class=article-meta><a class=btn-small href=https://the.fringe.ninja/tags/ddd/>ddd</a>
 <a class=btn-small href=https://the.fringe.ninja/tags/navision/>navision</a></p></div></footer></article><footer class="page-footer grey lighten-5"><div class="row max-width"><div class="col s12 l10 offset-l1 clear-padding"><div class=row></div></div></div><div class=footer-copyright><div class="row max-width" style=width:100%><div class="col s12 l10 offset-l1"><span class="grey-text text-darken-4"></span><div class=right></div></div></div></div></footer><script src=https://code.jquery.com/jquery-3.2.1.min.js></script><script src=https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js></script><script src=https://the.fringe.ninja/js/script.js></script></body></html>
