@@ -12,18 +12,18 @@ jobs:
     name: publish
     steps:
       - name: Checkout
-        uses: actions/checkout@a14471d83
+        uses: actions/checkout@v1
         with:
           submodules: true
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@v2
       - name: Build
-        uses: peaceiris/actions-hugo@v0.57.2
         if: github.event.deleted == false
-        with:
-          args: --gc --minify --cleanDestinationDir --contentDir site/content --layoutDir site/layouts --themesDir site/themes --config site/config.toml
+        run: hugo --gc --minify --cleanDestinationDir --contentDir site/content --layoutDir site/layouts --themesDir site/themes --config site/config.toml
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v1.1.0
+        uses: peaceiris/actions-gh-pages@v3
         if: success() && github.event_name == 'push'
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: ./public
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./public
