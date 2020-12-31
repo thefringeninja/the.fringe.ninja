@@ -3,7 +3,7 @@ Title: João Bragança - Software Engineer
 ---
 
 ## Professional Profile
-- Agile software developer with 18 years of professional development experience
+- Agile software developer with 20 years of professional development experience
 - Continually strives to acquire and improve knowledge base
 - Effective problem solver and big picture thinker
 - Able to grasp complex concepts and learn quickly
@@ -11,9 +11,11 @@ Title: João Bragança - Software Engineer
 
 ## Skills
 - Mastery of C#
-- Competent in many other languages, including JavaScript / Typescript, Ruby, Python, PHP
+- Competent in many other languages, including JavaScript / Typescript, Ruby, Python, PHP, F#
 - Docker
 - Cloud infrastructure: AWS, Terraform, Pulumi
+- REST
+- gRPC
 - Proficient in relational databases (MSSQL and MySQL), functional databases (EventStore), and document databases (RavenDB)
 - Message Queuing (RabbitMQ, MSMQ, Rhino Queues)
 - Adept at Test / Behavior Driven Development
@@ -36,12 +38,20 @@ Multiple contributions to several other OSS projects, including [NancyFX](https:
 
 ## Work Experience 
 
+### EventStoreDB
+
+<time datetime="2019-09-01">September 2019</time> - Present
+
+Software Engineer
+
+So far I have worked on implementing the gRPC transport for the main product, the .NET client SDK, and Quality Assurance Automation. Assisted with other client SDKs, as well as some onsite consulting.
+
 ### eVision Software
-<time datetime="2014-04-01">April 2018</time> - Present
+<time datetime="2014-04-01">April 2018</time> - <time datetime="2019-09-01">September 2019</time>
 
 Cloud Operations Engineer
 
-My responsibilities include monitoring production systems, architecting our cloud infrastructure, and automating as much as possible.
+My responsibilities included monitoring production systems, architecting our cloud infrastructure, and automating as much as possible.
 
 ### eVision Software
 <time datetime="2014-08-01">August 2014</time> - <time datetime="2018-04-01">April 2018</time>
