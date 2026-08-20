@@ -1,5 +1,6 @@
 ---
 Title: João Bragança - Software Engineer
+hide_header: true
 ---
 
 ## Professional Profile
