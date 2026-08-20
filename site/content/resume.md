@@ -14,9 +14,8 @@ Title: João Bragança - Software Engineer
 - Competent in many other languages, including JavaScript / Typescript, Ruby, Python, PHP, F#
 - Docker
 - Cloud infrastructure: AWS, Azure, Terraform, Pulumi, Nomad, Consul
-- REST
-- gRPC
-- Proficient in relational databases (MSSQL and MySQL), functional databases (EventStore), and document databases (RavenDB)
+- REST, gRPC
+- Proficient in relational databases (Postgres, MSSQL and MySQL), functional databases (EventStore), and other NoSQL databases (RavenDB, Elastic)
 - Message Queuing (RabbitMQ, MSMQ, Rhino Queues)
 - Adept at Test / Behavior Driven Development
 - Source Control: Git
@@ -31,7 +30,7 @@ Cross platform mobile phone application built on Avalonia and Elmish
 Sample Event sourced ERP application built on ESDB, SQLite, and Postgres
 
 ### [SQL Stream Store](https://github.com/SqlStreamStore/SqlStreamStore)
-A stream store library for .NET that specifically targets SQL based implementations. Primarily used to implement Event Sourced applications. Built both the PostgreSQL and HTTP Providers.
+A stream store library for .NET that specifically targets SQL based implementations. Primarily used to implement Event Sourced applications. Built both the PostgreSQL, MySQL, and HTTP Providers.
 
 ### [SQL Stream Store Browser](https://github.com/SqlStreamStore/sql-stream-store-browser)
 Front end for SQL Stream Store. Consumes HAL and Json Hyper Schema from the HTTP provider. Uses ReactJS and Material UI.
@@ -40,7 +39,7 @@ Front end for SQL Stream Store. Consumes HAL and Json Hyper Schema from the HTTP
 The open-source, functional database with Complex Event Processing in JavaScript. Built the Embedded Client. This allows a program to run EventStore in process. Useful for Integration Testing or High Availbility.
 
 ### Other
-Multiple contributions to several other OSS projects, including [NancyFX](https://github.com/NancyFx/Nancy), [react-schema-form](https://github.com/networknt/react-schema-form) [Projac](https://github.com/BitTacklr/Projac), and [RavenDB](https://github.com/ravendb/ravendb).
+Multiple contributions to several other OSS projects, including [NancyFX](https://github.com/NancyFx/Nancy), [react-schema-form](https://github.com/networknt/react-schema-form), [Projac](https://github.com/BitTacklr/Projac), and [RavenDB](https://github.com/ravendb/ravendb).
 
 ## Work Experience 
 
