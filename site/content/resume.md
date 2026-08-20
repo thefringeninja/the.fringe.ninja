@@ -24,7 +24,7 @@ Title: João Bragança - Software Engineer
 
 ## Open Source Profile
 
-### [Jacqued](https://github.com/thefringeninja/jacqued
+### [Jacqued](https://github.com/thefringeninja/jacqued)
 Cross platform mobile phone application built on Avalonia and Elmish 
 
 ### [Transacto](https://github.com/thefringeninja/transacto)
