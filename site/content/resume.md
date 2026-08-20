@@ -3,7 +3,7 @@ Title: João Bragança - Software Engineer
 ---
 
 ## Professional Profile
-- Agile software developer with 20 years of professional development experience
+- Agile software developer with 25 years of professional development experience
 - Continually strives to acquire and improve knowledge base
 - Effective problem solver and big picture thinker
 - Able to grasp complex concepts and learn quickly
