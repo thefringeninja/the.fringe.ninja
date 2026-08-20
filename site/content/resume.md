@@ -24,13 +24,13 @@ Title: João Bragança - Software Engineer
 ## Open Source Profile
 
 ### [Jacqued](https://github.com/thefringeninja/jacqued)
-Cross platform mobile phone application built on Avalonia and Elmish 
+Cross-platform fitness tracking application for Android and Desktop built with F#, Avalonia, and Elmish. Features the Wendler 5/3/1 program, workout programming, one-rep max calculations, mesocycle management, and exercise progression tracking. Persists data using event sourcing with SqlStreamStore. 
 
 ### [Transacto](https://github.com/thefringeninja/transacto)
-Sample Event sourced ERP application built on ESDB, SQLite, and Postgres
+Enterprise resource planning system demonstrating advanced event sourcing patterns with multiple backing stores (EventStoreDB, SQLite, PostgreSQL). Built with C# and ASP.NET Core, showcasing domain-driven design, event-driven architecture, and projection-based read models using Projac.
 
 ### [SQL Stream Store](https://github.com/SqlStreamStore/SqlStreamStore)
-A stream store library for .NET that specifically targets SQL based implementations. Primarily used to implement Event Sourced applications. Built both the PostgreSQL, MySQL, and HTTP Providers.
+A stream store library for .NET that specifically targets SQL based implementations. Primarily used to implement Event Sourced applications. Built the PostgreSQL, MySQL, and HTTP Providers.
 
 ### [SQL Stream Store Browser](https://github.com/SqlStreamStore/sql-stream-store-browser)
 Front end for SQL Stream Store. Consumes HAL and Json Hyper Schema from the HTTP provider. Uses ReactJS and Material UI.
