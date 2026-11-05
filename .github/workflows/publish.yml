@@ -38,3 +38,16 @@ jobs:
         with:
           path: ./public
         if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+
+  deploy:
+    needs: publish
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: deploy
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
