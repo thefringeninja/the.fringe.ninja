@@ -12,11 +12,12 @@ hide_header: true
 
 ## Skills
 - Mastery of C#
+- Proficient in agentic software development: Claude Desktop, GitHub Copilot, PI
 - Competent in many other languages, including JavaScript / Typescript, Ruby, Python, PHP, F#
 - Docker
 - Cloud infrastructure: AWS, Azure, Terraform, Pulumi, Nomad, Consul
 - REST, gRPC
-- Proficient in relational databases (Postgres, MSSQL and MySQL), functional databases (EventStore), and other NoSQL databases (RavenDB, Elastic)
+- Proficient in relational databases (Postgres, MSSQL and MySQL), functional databases (EventStore and SQL Stream Store), and other NoSQL databases (RavenDB, Elastic)
 - Message Queuing (RabbitMQ, MSMQ, Rhino Queues)
 - Adept at Test / Behavior Driven Development
 - Source Control: Git
@@ -50,7 +51,7 @@ Multiple contributions to several other OSS projects, including [NancyFX](https:
 
 Senior Software Engineer
 
-Architected and implemented a multi-tenant cloud infrastructure on Azure using Nomad and Terraform/Pulumi, enabling scalable distributed deployment of desktop applications. Designed and built highly-available multi-tenant database solutions supporting enterprise customers.
+Architected and implemented a multi-tenant cloud infrastructure using GitHub Copilot and Claude Desktop on Azure using Nomad and Terraform/Pulumi, enabling scalable distributed deployment of desktop applications. Designed and built highly-available multi-tenant database solutions supporting enterprise customers.
 
 ### EventStoreDB
 
